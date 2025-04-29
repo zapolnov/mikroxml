@@ -6,9 +6,20 @@ set(name mikroxml)
 
 project(${name})
 
+if(NOT TARGET utki::utki)
 find_package(utki CONFIG REQUIRED)
+endif()
 
-file(GLOB_RECURSE srcs "../src/${name}/*.cpp")
+set(srcdir "${CMAKE_CURRENT_SOURCE_DIR}/../src/${name}")
+file(GLOB_RECURSE src RELATIVE "${srcdir}" CONFIGURE_DEPENDS "${srcdir}/*.cpp" "${srcdir}/*.hpp")
+
+set(srcs)
+foreach(file ${src})
+    get_filename_component(path "${file}" DIRECTORY)
+    string(REPLACE "/" "\\" path "Source Files/${path}")
+    source_group("${path}" FILES "${srcdir}/${file}")
+    list(APPEND srcs "${srcdir}/${file}")
+endforeach()
 
 add_library(
     ${name}
@@ -22,8 +33,8 @@ set_target_properties(${name} PROPERTIES CXX_EXTENSIONS OFF)
 
 target_include_directories(
     ${name}
-    INTERFACE
-        $<BUILD_INTERFACE:>
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../src>
         $<INSTALL_INTERFACE:include>
 )
 
@@ -32,6 +43,8 @@ target_link_libraries(
     PUBLIC
         utki::utki
 )
+
+if(NOT MIKROXML_DISABLE_INSTALL)
 
 # install library header files preserving directory hierarchy
 install(
@@ -61,3 +74,5 @@ install(
     NAMESPACE
         ${name}::
 )
+
+endif()
